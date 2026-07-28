@@ -120,6 +120,91 @@ const GITHUB_OSS_DEFINITION: BundleDefinition = {
   ],
 }
 
+const COMMUNITY_DISCORD_DEFINITION: BundleDefinition = {
+  platform: 'discord',
+  version: '1',
+  inputs: [
+    {
+      id: 'serverName',
+      label: 'What should your server be called?',
+      placeholder: 'e.g., The Coding Den',
+      required: true,
+      type: 'text',
+      maxLength: 100,
+    },
+  ],
+  steps: [
+    {
+      id: 'create_server',
+      type: 'discord.create_server',
+      label: 'Building your Discord server',
+      config: {
+        name: '{{inputs.serverName}}',
+        system_channel_id: '3',
+        roles: [
+          { id: '0', name: '@everyone' },
+          { id: '1', name: 'Moderator', color: 3066993, hoist: true },
+          { id: '2', name: 'Member', color: 3447003 },
+        ],
+        channels: [
+          // WELCOME category
+          { id: '1', name: 'WELCOME', type: 4, position: 0 },
+          { id: '2', name: 'rules', type: 0, parent_id: '1', position: 0 },
+          { id: '3', name: 'announcements', type: 0, parent_id: '1', position: 1 },
+          { id: '4', name: 'introductions', type: 0, parent_id: '1', position: 2 },
+          // GENERAL category
+          { id: '5', name: 'GENERAL', type: 4, position: 1 },
+          { id: '6', name: 'general', type: 0, parent_id: '5', position: 0 },
+          { id: '7', name: 'off-topic', type: 0, parent_id: '5', position: 1 },
+          { id: '8', name: 'resources', type: 0, parent_id: '5', position: 2 },
+          { id: '9', name: 'media', type: 0, parent_id: '5', position: 3 },
+          // VOICE category
+          { id: '10', name: 'VOICE', type: 4, position: 2 },
+          { id: '11', name: 'Lounge', type: 2, parent_id: '10', position: 0 },
+          { id: '12', name: 'Focus Room', type: 2, parent_id: '10', position: 1 },
+        ],
+      },
+    },
+    {
+      id: 'add_user',
+      type: 'discord.add_member',
+      label: 'Adding you to your new server',
+      dependsOn: ['create_server'],
+      config: {
+        guildId: '{{steps.create_server.output.guildId}}',
+        userId: '{{platform.userId}}',
+      },
+    },
+    {
+      id: 'transfer_ownership',
+      type: 'discord.transfer_ownership',
+      label: 'Transferring server ownership to you',
+      dependsOn: ['add_user'],
+      config: {
+        guildId: '{{steps.create_server.output.guildId}}',
+        newOwnerId: '{{platform.userId}}',
+      },
+    },
+    {
+      id: 'create_invite',
+      type: 'discord.create_invite',
+      label: 'Generating your invite link',
+      dependsOn: ['transfer_ownership'],
+      config: {
+        guildId: '{{steps.create_server.output.guildId}}',
+        channelId: '{{steps.create_server.output.generalChannelId}}',
+      },
+    },
+    {
+      id: 'bot_leave',
+      type: 'discord.bot_leave',
+      label: 'Cleaning up',
+      dependsOn: ['create_invite'],
+      config: { guildId: '{{steps.create_server.output.guildId}}' },
+    },
+  ],
+}
+
 async function main() {
   await prisma.bundle.upsert({
     where: { slug: 'gaming-community-discord' },
@@ -172,7 +257,43 @@ async function main() {
     },
   })
 
-  console.log('Seeded 2 bundles ✓')
+  await prisma.bundle.upsert({
+    where: { slug: 'community-discord-server' },
+    create: {
+      slug: 'community-discord-server',
+      name: 'Community Server',
+      tagline: 'A fully built Discord server, ready in seconds',
+      description: 'Buy once, and we\'ll create a complete Discord server under your account — organized categories, text and voice channels, role structure, and your invite link. No templates, no setup. Just your server.',
+      platform: 'DISCORD',
+      priceCents: 1499,
+      stripePriceId: 'price_COMMUNITY_DISCORD',
+      tags: ['discord', 'community', 'server'],
+      previewItems: [
+        '3 organized categories (Welcome, General, Voice)',
+        '8 text channels pre-named and ready',
+        '2 voice channels',
+        'Moderator & Member roles',
+        'Server ownership transferred to you',
+        'Invite link delivered instantly',
+      ],
+      definition: COMMUNITY_DISCORD_DEFINITION as object,
+      sortOrder: 0,
+    },
+    update: {
+      definition: COMMUNITY_DISCORD_DEFINITION as object,
+      tagline: 'A fully built Discord server, ready in seconds',
+      previewItems: [
+        '3 organized categories (Welcome, General, Voice)',
+        '8 text channels pre-named and ready',
+        '2 voice channels',
+        'Moderator & Member roles',
+        'Server ownership transferred to you',
+        'Invite link delivered instantly',
+      ],
+    },
+  })
+
+  console.log('Seeded 3 bundles ✓')
 }
 
 main()

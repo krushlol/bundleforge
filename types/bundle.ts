@@ -27,6 +27,7 @@ export interface BundleStep {
 }
 
 export type StepType =
+  | 'discord.create_server'
   | 'discord.create_server_from_template'
   | 'discord.add_member'
   | 'discord.transfer_ownership'

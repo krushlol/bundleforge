@@ -36,6 +36,26 @@ export async function executeDiscordStep(
   const userToken = ctx.decryptedToken
 
   switch (step.type) {
+    case 'discord.create_server': {
+      // cfg.channels: array of {id, name, type, parent_id?} — local IDs are just placeholders
+      // cfg.roles: array of {id, name, color?}
+      // cfg.system_channel_id: local channel id to use as system channel
+      const guild = await discordRequest(
+        'POST',
+        '/guilds',
+        `Bot ${botToken}`,
+        {
+          name: cfg.name,
+          channels: cfg.channels,
+          roles: cfg.roles,
+          system_channel_id: cfg.system_channel_id,
+        }
+      ) as { id: string; channels: Array<{ id: string; type: number; name: string }> }
+      const generalChannel = guild.channels.find((c) => c.type === 0 && c.name === 'general')
+        ?? guild.channels.find((c) => c.type === 0)
+      return { guildId: guild.id, generalChannelId: generalChannel?.id }
+    }
+
     case 'discord.create_server_from_template': {
       const guild = await discordRequest(
         'POST',

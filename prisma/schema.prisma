@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Platform {
+  DISCORD
+  NOTION
+  GITHUB
+  SLACK
+}
+
+enum PurchaseStatus {
+  PENDING_PAYMENT
+  PAID
+  PROVISIONING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum ProvisioningStatus {
+  QUEUED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id         String   @id @default(cuid())
+  supabaseId String   @unique
+  email      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  purchases           Purchase[]
+  platformConnections PlatformConnection[]
+
+  @@map("users")
+}
+
+model Bundle {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  tagline       String
+  description   String
+  platform      Platform
+  priceCents    Int
+  stripePriceId String
+  coverImageUrl String?
+  tags          String[]
+  previewItems  String[]
+  definition    Json
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  purchases Purchase[]
+
+  @@map("bundles")
+}
+
+model Purchase {
+  id                    String         @id @default(cuid())
+  userId                String
+  bundleId              String
+  stripeSessionId       String         @unique
+  stripePaymentIntentId String?
+  amountPaidCents       Int
+  status                PurchaseStatus @default(PENDING_PAYMENT)
+  userInputs            Json?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bundle           Bundle            @relation(fields: [bundleId], references: [id])
+  provisioningJobs ProvisioningJob[]
+
+  @@map("purchases")
+}
+
+model PlatformConnection {
+  id                    String    @id @default(cuid())
+  userId                String
+  platform              Platform
+  platformUserId        String
+  platformUsername      String?
+  encryptedToken        Json
+  encryptedRefreshToken Json?
+  scopes                String[]
+  expiresAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@map("platform_connections")
+}
+
+model ProvisioningJob {
+  id           String             @id @default(cuid())
+  purchaseId   String
+  platform     Platform
+  status       ProvisioningStatus @default(QUEUED)
+  steps        Json               @default("[]")
+  output       Json?
+  errorMessage String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@map("provisioning_jobs")
+}

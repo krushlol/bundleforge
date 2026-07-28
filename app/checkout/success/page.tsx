@@ -1,10 +1,11 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [status, setStatus] = useState<'polling' | 'redirecting' | 'timeout'>('polling')
@@ -67,5 +68,13 @@ export default function CheckoutSuccessPage() {
         </>
       )}
     </div>
+  )
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<div className="container py-24 text-center"><Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" /></div>}>
+      <CheckoutSuccessContent />
+    </Suspense>
   )
 }

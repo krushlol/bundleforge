@@ -38,7 +38,7 @@ export async function Navbar() {
               </Link>
               <Link href="/account" className="relative w-8 h-8 rounded-full overflow-hidden border border-border hover:opacity-80 transition-opacity flex-shrink-0 block bg-muted">
                 {avatarUrl ? (
-                  <Image src={avatarUrl} alt="Profile" fill className="object-cover" unoptimized />
+                  <Image src={avatarUrl} alt="Profile" fill className="object-cover pointer-events-none" unoptimized />
                 ) : (
                   <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-muted-foreground">{initials}</span>
                 )}

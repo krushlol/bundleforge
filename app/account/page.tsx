@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { Button } from '@/components/ui/button'
 import { PlatformBadge } from '@/components/bundles/platform-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AvatarUpload } from '@/components/account/avatar-upload'
 
 export const metadata = { title: 'Account — BundleForge' }
 
@@ -24,7 +25,8 @@ export default async function AccountPage() {
         <CardHeader>
           <CardTitle className="text-base">Profile</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        <CardContent className="space-y-4 text-sm">
+          <AvatarUpload currentUrl={user.avatarUrl ?? null} />
           <p className="text-muted-foreground">{user.email}</p>
           <form action="/api/auth/sign-out" method="POST">
             <Button type="submit" variant="outline" size="sm">Sign out</Button>

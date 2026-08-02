@@ -2,15 +2,20 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { BundleCard } from '@/components/bundles/bundle-card'
 import { prisma } from '@/lib/prisma'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function HomePage() {
   let featuredBundles: import('@prisma/client').Bundle[] = []
+  let isLoggedIn = false
   try {
     featuredBundles = await prisma.bundle.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' },
       take: 3,
     })
+    const supabase = await createClient()
+    const { data } = await supabase.auth.getUser()
+    isLoggedIn = !!data.user
   } catch {
     // DB not yet connected — show landing without bundles
   }
@@ -33,7 +38,9 @@ export default async function HomePage() {
             <Link href="/bundles">Browse Bundles</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/sign-up">Get started free</Link>
+            <Link href={isLoggedIn ? '/dashboard' : '/sign-up'}>
+              {isLoggedIn ? 'Go to dashboard' : 'Get started free'}
+            </Link>
           </Button>
         </div>
       </section>
